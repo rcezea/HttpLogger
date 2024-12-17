@@ -1,19 +1,21 @@
 {
     "name": "rcezea/httplogger",
-    "description": "A simple logging library for PHP.",
-    "version": "1.0.0",
+    "description": "Lightweight and flexible logging library for PHP applications. It enables developers to send log data to a remote server and log to local files.",
     "type": "library",
     "require": {
-        "php": ">=8.0",
-        "ext-curl": "*",
-        "tracy/tracy": "v2.10.9"
+        "tracy/tracy": "^2.10",
+      "ext-curl": "*"
     },
     "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Rcezea\\HttpLogger\\": "src/"
+        }
+    },
     "authors": [
         {
             "name": "Richard",
-            "email": "rcezea007@gmail.com"
+            "email": "rclancing@gmail.com"
         }
-    ],
-    "minimum-stability": "dev"
+    ]
 }
