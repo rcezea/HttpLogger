@@ -1,5 +1,5 @@
 {
-    "name": "rcezea/logger",
+    "name": "rcezea/httplogger",
     "description": "A simple logging library for PHP.",
     "version": "1.0.0",
     "type": "library",

@@ -7,7 +7,7 @@ use Tracy\ILogger;
 
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
-class logger implements ILogger
+class httplogger implements ILogger
 {
     private string $endpoint;
     private ?string $successLogFilePath;
@@ -110,4 +110,4 @@ class logger implements ILogger
     }
 }
 
-//Debugger::setLogger(new logger('http://127.0.0.1:5000/errorhandler', 'asrdtdtdt', 'xffgxxcxgccgfy', true));
+//Debugger::setLogger(new httplogger('http://127.0.0.1:5000/errorhandler', 'asrdtdtdt', 'xffgxxcxgccgfy', true));
