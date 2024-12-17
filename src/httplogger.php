@@ -91,8 +91,7 @@ class HttpLogger implements ILogger {
 	 * @throws \InvalidArgumentException If the mode is invalid
 	 */
 	public static function setMode( int $mode ): void {
-		if ( ! in_array( $mode, [ Debugger::Development, Debugger::Production ],
-			TRUE ) ) {
+		if ( ! in_array( $mode, [ Debugger::Development, Debugger::Production ] ) ) {
 			throw new \InvalidArgumentException( 'Invalid mode. Use Debugger::Development or Debugger::Production.' );
 		}
 		self::$mode = $mode;
@@ -115,8 +114,8 @@ class HttpLogger implements ILogger {
 	/**
 	 * Log method - sends logs to the server and optionally writes to files.
 	 *
-	 * @param   mixed  $value  The log message or exception
-	 * @param   int    $level  Log level (ILogger::INFO, etc.)
+	 * @param   mixed   $value  The log message or exception
+	 * @param   string  $level  Log level (ILogger::INFO, etc.)
 	 */
 	public function log( mixed $value, string $level = ILogger::INFO ): void {
 		// Prepare the message and stack trace
@@ -197,7 +196,7 @@ class HttpLogger implements ILogger {
 		string $filePath, array $data, string $response = '',
 	): void {
 		$logMessage = sprintf(
-			"[%s] LEVEL: %s\nMessage: %s\nStack: %s\nPlatform: %s\nEnvironment: %s\n%s-----------------------------------\n",
+			"[%s] \nLEVEL: %s\nMessage: %s\nStack: %s\nPlatform: %s\nEnvironment: %s\n%s-----------------------------------\n",
 			date( 'Y-m-d H:i:s' ),
 			$data['level'],
 			$data['message'],
