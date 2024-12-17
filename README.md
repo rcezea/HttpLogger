@@ -115,8 +115,10 @@ For failed attempts, `curl_error` and server responses will be included.
 ### **Usage Example**
 
 ```php
+require_once dirname(__DIR__) . '/vendor/autoload.php'; // map to exact autoload location
 use Rcezea\HttpLogger\HttpLogger;
 use Tracy\Debugger;
+use Tracy\ILogger
 
 // Initialize Logger
 $logger = new HttpLogger(

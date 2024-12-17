@@ -5,8 +5,6 @@ namespace Rcezea\HttpLogger;
 use Tracy\Debugger;
 use Tracy\ILogger;
 
-require_once dirname( __DIR__ ) . '/vendor/autoload.php';
-
 /**
  * HTTPLogger Class
  *
