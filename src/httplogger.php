@@ -1,8 +1,8 @@
 <?php
 
 namespace Rcezea\HttpLogger;
-use Tracy\Debugger;
 
+use Tracy\Debugger;
 use Tracy\ILogger;
 
 require_once dirname(__DIR__) . '/vendor/autoload.php';
@@ -12,27 +12,34 @@ class httplogger implements ILogger
     private string $endpoint;
     private ?string $successLogFilePath;
     private ?string $failedLogFilePath;
-    private string $appId;
-    private string $secretKey;
+    private ?string $appId;
+    private ?string $secretKey;
 
+    // Static property for mode
+    private static bool $mode = Debugger::DEVELOPMENT;
+
+    /**
+     * Constructor
+     */
     public function __construct(
         string $endpoint,
-        string $appId,
-        string $secretKey,
+        ?string $appId = null,
+        ?string $secretKey = null,
         bool $logToFile = false,
         string $logDir = null
     ) {
-        if (empty($appId) || empty($secretKey)) {
-            throw new \InvalidArgumentException('Both appId and secretKey are required.');
-        }
+        $this->endpoint = $endpoint;
+
+        // API security - optional
         $this->appId = $appId;
         $this->secretKey = $secretKey;
 
+        // Validate URL
         if (!filter_var($endpoint, FILTER_VALIDATE_URL)) {
             throw new \InvalidArgumentException("Invalid endpoint URL: $endpoint");
         }
-        $this->endpoint = $endpoint;
 
+        // Handle logging to files
         if ($logToFile) {
             $logDir = $logDir ?? dirname(__DIR__) . '/logs';
             if (!is_dir($logDir) && !mkdir($logDir, 0777, true) && !is_dir($logDir)) {
@@ -45,9 +52,24 @@ class httplogger implements ILogger
             $this->failedLogFilePath = null;
         }
 
-        Debugger::enable(Debugger::PRODUCTION, $logDir);
+        // Apply the static mode to Debugger
+        Debugger::enable(self::$mode, $logDir);
     }
 
+    /**
+     * Static method to set PRODUCTION or DEVELOPMENT mode
+     */
+    public static function setMode(int $mode): void
+    {
+        if (!in_array($mode, [Debugger::DEVELOPMENT, Debugger::PRODUCTION])) {
+            throw new \InvalidArgumentException('Invalid mode. Use Debugger::DEVELOPMENT or Debugger::PRODUCTION.');
+        }
+        self::$mode = $mode;
+    }
+
+    /**
+     * Log method (implements ILogger)
+     */
     public function log($value, $level = ILogger::INFO): void
     {
         $message = $value instanceof \Throwable
@@ -58,13 +80,20 @@ class httplogger implements ILogger
             'level' => $level,
             'message' => $message,
             'timestamp' => date('Y-m-d H:i:s'),
-            'app_id' => $this->appId,
-            'secret_key' => $this->secretKey,
         ];
+
+        // Add optional API keys
+        if ($this->appId && $this->secretKey) {
+            $data['app_id'] = $this->appId;
+            $data['secret_key'] = $this->secretKey;
+        }
 
         $this->sendLogToServer($data);
     }
 
+    /**
+     * Send log data to the server
+     */
     private function sendLogToServer(array $data): void
     {
         $ch = curl_init($this->endpoint);
@@ -95,6 +124,9 @@ class httplogger implements ILogger
         }
     }
 
+    /**
+     * Log to a file
+     */
     private function logToFile(string $filePath, array $data, string $response = ''): void
     {
         $logMessage = sprintf(
@@ -109,5 +141,3 @@ class httplogger implements ILogger
         file_put_contents($filePath, $logMessage, FILE_APPEND);
     }
 }
-
-//Debugger::setLogger(new httplogger('http://127.0.0.1:5000/errorhandler', 'asrdtdtdt', 'xffgxxcxgccgfy', true));
