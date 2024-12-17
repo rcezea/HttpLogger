@@ -153,3 +153,24 @@ $logger->log('This is an informational message.', ILogger::INFO);
 - Added platform configuration (`setPlatform`).
 - Enhanced file logging to include success and failure logs.
 - Integrated API authentication.
+
+
+---
+
+### License
+This package is licensed under the MIT License.
+
+---
+
+### Contributing
+Contributions are welcome! Feel free to submit pull requests or open issues for improvements or bug fixes.
+
+---
+
+### Author
+* **Richard E** - Github: [rcezea](https://github.com/rcezea)
+
+---
+
+### Support
+For questions, issues, or support, please contact [rclancing@gmail.com](mailto:rclancing@gmail.com).
