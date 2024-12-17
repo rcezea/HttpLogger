@@ -1,0 +1,19 @@
+{
+    "name": "rcezea/HttpLogger",
+    "description": "A simple logging library for PHP.",
+    "version": "1.0.0",
+    "type": "library",
+    "require": {
+        "php": ">=8.0",
+        "ext-curl": "*",
+        "tracy/tracy": "v2.10.9"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Richard",
+            "email": "rcezea007@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev"
+}
