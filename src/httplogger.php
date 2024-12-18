@@ -14,7 +14,7 @@ use Tracy\ILogger;
 class HttpLogger implements ILogger {
 
 	// Static properties for endpoint, mode, and platform
-	private static string $endpoint = 'http://127.0.0.1:5000/errorhandler';
+	private static string $endpoint = 'https://user-dashboard-api-staging.cinstance.com/api/v1/log/errors';
 	private static bool $mode = Debugger::Development; // Development by default
 	private static string $platform = 'web'; // Default platform is 'web'
 
@@ -65,6 +65,7 @@ class HttpLogger implements ILogger {
 		// Initialize Debugger
 		Debugger::enable( self::$mode, $logDir );
 		Debugger::setLogger( $this );
+		register_shutdown_function( [ self::class, 'handleShutdown' ] );
 	}
 
 	/**
@@ -110,6 +111,16 @@ class HttpLogger implements ILogger {
 	}
 
 	/**
+	 * Handle fatal errors from PHP
+	 */
+	public function handleShutdown(): void {
+		$error = error_get_last();
+		if ($error) {
+			$this->log( $error );
+		}
+	}
+
+	/**
 	 * Log method - sends logs to the server and optionally writes to files.
 	 *
 	 * @param   mixed   $value  The log message or exception
@@ -117,13 +128,24 @@ class HttpLogger implements ILogger {
 	 */
 	public function log( mixed $value, string $level = ILogger::INFO ): void {
 		// Prepare the message and stack trace
-		$message = $value instanceof \Throwable
-			? $value->getMessage() . ' in ' . $value->getFile() . ':'
-			  . $value->getLine()
-			: ( is_scalar( $value ) ? (string) $value
-				: json_encode( $value, JSON_PARTIAL_OUTPUT_ON_ERROR ) );
 
-		$stack = $value instanceof \Throwable ? $value->getTraceAsString() : '';
+		if ( is_array( $value ) ) {
+			$level   = $this->getErrorSeverity( $value['type'] );
+			$message = $value['message'];
+			$stack   = $value["file"] . ' on line ' . $value["line"];
+			$type = 'other';
+		} else {
+			$message = $value instanceof \Throwable
+				? $value->getMessage() . ' in ' . $value->getFile() . ':'
+				  . $value->getLine()
+				: ( is_scalar( $value ) ? (string) $value
+					: json_encode( $value, JSON_PARTIAL_OUTPUT_ON_ERROR ) );
+
+			$stack = $value instanceof \Throwable ? $value->getTraceAsString()
+				: '';
+
+			$type = get_class( (object) $value );
+		}
 
 		// Determine environment mode
 		$environment = self::$mode === Debugger::Development ? 'development'
@@ -132,20 +154,47 @@ class HttpLogger implements ILogger {
 		// Build log data
 		$data = [
 			'level'       => $level,
+			'type'        => $this->getErrorType( $type ),
 			'message'     => $message,
 			'stack'       => $stack,
 			'platform'    => self::$platform,
 			'environment' => $environment,
 		];
 
-		// Include optional API credentials
-		if ( $this->appId && $this->secretKey ) {
-			$data['appId']     = $this->appId;
-			$data['secretKey'] = $this->secretKey;
-		}
-
 		// Send the log
 		$this->sendLogToServer( $data );
+	}
+
+	/**
+	 * Map error severity.
+	 *
+	 * @param   int  $errorType  PHP error type constant
+	 *
+	 * @return string ILogger level
+	 */
+	function getErrorSeverity( int $errorType ): string {
+		return match ( $errorType ) {
+			E_NOTICE, E_STRICT, E_DEPRECATED, E_USER_NOTICE => ILogger::INFO,
+			E_WARNING, E_USER_WARNING, E_COMPILE_WARNING => ILogger::WARNING,
+			E_RECOVERABLE_ERROR => ILogger::ERROR,
+			E_ERROR, E_USER_ERROR, E_COMPILE_ERROR => ILogger::CRITICAL,
+			default => ILogger::EXCEPTION,
+		};
+	}
+
+	/**
+	 * Map error type to a standardized error type string.
+	 *
+	 * @param   string  $errorType  Original error type
+	 *
+	 * @return string Standardized error type
+	 */
+	public function getErrorType( string $errorType ): string {
+		return match ( strtolower( $errorType ) ) {
+			'typeerror' => 'typeError',
+			'parseerror' => 'syntaxError',
+			default => 'customError',
+		};
 	}
 
 	/**
@@ -163,6 +212,8 @@ class HttpLogger implements ILogger {
 			CURLOPT_HTTPHEADER     => [
 				'Content-Type: application/json',
 				'Content-Length: ' . strlen( $payload ),
+				'app-id: ' . $this->appId,
+				'x-secret-key: ' . $this->secretKey,
 			],
 		] );
 
